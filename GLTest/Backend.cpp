@@ -2,15 +2,17 @@
 #include <chrono>
 #include <fstream>
 #include <cmath>
+#include <string>
 
 #include <SDL.h>
 #include <glew.h>
 
 #include "Backend.h"
+#include "Read.h"
+#include "Debug.h"
+#include "Shader.h"
 
 const char GameName[] = "OpenGl Testing - Seth Franklin";
-
-std::ofstream DebugStream;
 
 bool IsRunning = false;
 
@@ -30,8 +32,9 @@ void GameLoop(float DeltaTime);
 void PollEvent(SDL_Event* Event);
 
 GLuint VertexArrayObject;
-GLuint ShaderProgram;
-int TimeUniformLocation;
+
+Shader* SimpleShader;
+Shader* VertexColorShader;
 
 void Backend::Start()
 {
@@ -87,12 +90,12 @@ void Run()
 void StartProcedure()
 {
 
-	DebugStream.open("debug.txt");
+	Debug::Enable();
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
 
-		DebugStream << "SDL_Init Error: " << SDL_GetError() << std::endl;
+		Debug::Log("SDL_Init Error: " + std::string(SDL_GetError()));
 
 		IsRunning = false;
 
@@ -104,7 +107,7 @@ void StartProcedure()
 	if (SDL_GetCurrentDisplayMode(0, &MonitorInfo) != 0)
 	{
 
-		DebugStream << "SDL_GetCurrentDisplayMode Error: " << SDL_GetError() << std::endl;
+		Debug::Log("SDL_GetCurrentDisplayMode Error: " + std::string(SDL_GetError()));
 
 		IsRunning = false;
 
@@ -121,7 +124,7 @@ void StartProcedure()
 	if (glewInit() != GLEW_OK)
 	{
 
-		DebugStream << "glewInit Error" << std::endl;
+		Debug::Log("glewInit Error");
 
 		IsRunning = false;
 
@@ -132,7 +135,10 @@ void StartProcedure()
 void ShutdownProcedure()
 {
 
-	DebugStream.close();
+	delete SimpleShader;
+	delete VertexColorShader;
+
+	Debug::Disable();
 
 	SDL_GL_DeleteContext(GLContext);
 	SDL_DestroyWindow(Window);
@@ -163,12 +169,10 @@ void GameLoop(float DeltaTime)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glUseProgram(ShaderProgram); // All rendering calls after a glUseProgram will use the program and it's shaders
-
 	Timer += DeltaTime;
-	float Factor = (std::sin(Timer * 10) + 1.0f) / 2.0f;
+	float Factor = float(std::sin(Timer * 2.0) + 1.0f) / 2.0f;
 
-	glUniform4f(TimeUniformLocation, Factor * 1.0f, Factor * 0.5f, Factor * 0.2f, 1.0f);
+	SimpleShader->SetUniform(COLOR_UNIFORM, Factor * 1.0f, Factor * 0.5f, Factor * 0.2f, 1.0f);
 
 	glBindVertexArray(VertexArrayObject); // Use vertex attribute data
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -183,10 +187,17 @@ void LoadShaders()
 	float Vertices[] =
 	{
 	
-		-0.5, -0.5, 0.0,
+		-0.5, -0.5, 0.0, // Position
+		1.0, 0.0, 0.0, // Color
+
 		-0.5, 0.5, 0.0,
+		0.0, 1.0, 0.0,
+
 		0.5, -0.5, 0.0,
-		0.5, 0.5, 0.0
+		0.0, 0.0, 1.0,
+
+		0.5, 0.5, 0.0,
+		1.0, 1.0, 1.0
 	
 	};
 
@@ -221,105 +232,16 @@ void LoadShaders()
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
 
-	const GLchar *VertexShaderSource = // @TODO: Read shaders from file instead of this ghetto ass way of writing
-	"#version 330 core\n"
-	"layout (location = 0) in vec3 Position;\n" // Location is used to link between vertex data and input for shaders
-	"void main()\n"
-	"{\n"
-	"gl_Position = vec4(Position.x, Position.y, Position.z, 1.0);\n"
-	"}\n";
+	SimpleShader = new Shader("singlecolor", { {COLOR_UNIFORM, "Color"} });
+	VertexColorShader = new Shader("coloredvertex", {});
 
-	const GLchar *FragmentShaderSource =
-	"#version 330 core\n"
-	"out vec4 FragmentColor;\n"
-	"uniform vec4 Color;\n"
-	"void main()\n"
-	"{\n"
-	"FragmentColor = Color;\n"
-	"}\n";
+	VertexColorShader->Use();
 
-	// Compiling Shaders (OpenGl compiles GLSL at runtime)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
-	GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
-	GLuint FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	glShaderSource(VertexShader, 1, &VertexShaderSource, NULL); // Attaches source code to shader object
-	// The 1 value is how many strings are being passed on
-
-	glCompileShader(VertexShader); // Compiles the shader
-
-	glShaderSource(FragmentShader, 1, &FragmentShaderSource, NULL); // Compiles fragment shader
-	glCompileShader(FragmentShader);
-
-	// Compile error checking
-
-	int Success;
-	char CompileLog[512];
-
-	glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &Success); // Gets info about shader, in this case the compile status, info in form of an int
-
-	if (!Success)
-	{
-
-		glGetShaderInfoLog(VertexShader, 512, NULL, CompileLog);
-
-		DebugStream << "Vertex Shader Compile Error: " << CompileLog << std::endl;
-
-	}
-
-	glGetShaderiv(FragmentShader, GL_COMPILE_STATUS, &Success); // Gets info about shader, in this case the compile status, info in form of an int
-
-	if (!Success)
-	{
-
-		glGetShaderInfoLog(FragmentShader, 512, NULL, CompileLog);
-
-		DebugStream << "Fragment Shader Compile Error: " << CompileLog << std::endl;
-
-	}
-
-	// Linking to shader program
-
-	ShaderProgram = glCreateProgram();
-
-	glAttachShader(ShaderProgram, VertexShader);
-	glAttachShader(ShaderProgram, FragmentShader);
-
-	glLinkProgram(ShaderProgram); // Links the program's shaders together
-
-	// Linking error checking
-
-	glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
-
-	if (!Success)
-	{
-
-		glGetProgramInfoLog(ShaderProgram, 512, NULL, CompileLog);
-
-		DebugStream << "Shader Program Link Error: " << CompileLog << std::endl;
-
-	}
-
-	glDeleteShader(VertexShader); // Once linked to the shader program, the shader objects aren't needed anymore
-	glDeleteShader(FragmentShader);
-
-	TimeUniformLocation = glGetUniformLocation(ShaderProgram, "Color");
-
-	// Vertex Attribute Linking
-
-	// The vertex shader can input any kinds of vertex data, but you have to link between the array and the shader correctly
-
-	// Use a vertex attribute pointer to link to locations
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-	// 1: Location of vertex attribute
-	// 2: How many values (so opengl knows it's a vec3)
-	// 3: Type of data, float in this case
-	// 4: Stride length, essentially how much data is in each vertex. In some cases you can have a color and position value for vertex, that would be 6 * sizeof(float)
-	// 5: Offset for the data, you can have other data before vertex data? Has a strange cast
-
-	glEnableVertexAttribArray(0); // Enables vertex attribute location 0
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 }
 
@@ -339,6 +261,31 @@ void PollEvent(SDL_Event* Event)
 
 			if (Event->key.keysym.sym == SDLK_1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			else if (Event->key.keysym.sym == SDLK_2) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+			switch (Event->key.keysym.sym)
+			{
+
+				case SDLK_1:
+
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					break;
+
+				case SDLK_2:
+
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					break;
+
+				case SDLK_3:
+
+					VertexColorShader->Use();
+					break;
+
+				case SDLK_4:
+
+					SimpleShader->Use();
+					break;
+
+			}
 
 			break;
 
