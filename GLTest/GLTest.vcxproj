@@ -69,7 +69,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\Documents\CPPProgramming\glew\include\GL;D:\Documents\CPPProgramming\SDL2\Windows\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Documents\CPPProgramming\GLM\;D:\Documents\CPPProgramming\glew\include\GL;D:\Documents\CPPProgramming\SDL2\Windows\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Documents\CPPProgramming\glew\lib\Release\Win32;D:\Documents\CPPProgramming\SDL2\Windows\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -77,7 +77,7 @@
     <LibraryPath>D:\Documents\CPPProgramming\glew\lib\Release\x64;D:\Documents\CPPProgramming\SDL2\Windows\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>D:\Documents\CPPProgramming\glew\include\GL;D:\Documents\CPPProgramming\SDL2\Windows\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Documents\CPPProgramming\GLM\;D:\Documents\CPPProgramming\glew\include\GL;D:\Documents\CPPProgramming\SDL2\Windows\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Documents\CPPProgramming\glew\lib\Release\Win32;D:\Documents\CPPProgramming\SDL2\Windows\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,14 +136,24 @@
     <ClCompile Include="Backend.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="EntryPoint.cpp" />
+    <ClCompile Include="Gravity.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Read.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backend.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="ExampleBaseClass.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Gravity.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="Read.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -61,3 +61,15 @@ void Debug::Log(char Output[])
 	}
 
 }
+
+void Debug::Int(int a)
+{
+
+	if (State == ON)
+	{
+
+		Stream << a << std::endl;
+
+	}
+
+}

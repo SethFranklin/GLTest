@@ -30,6 +30,18 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Gravity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backend.h">
@@ -42,6 +54,24 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gravity.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExampleBaseClass.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

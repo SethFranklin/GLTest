@@ -7,6 +7,12 @@
 #include <SDL.h>
 #include <glew.h>
 
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "Backend.h"
 #include "Read.h"
 #include "Debug.h"
@@ -32,8 +38,9 @@ void GameLoop(float DeltaTime);
 void PollEvent(SDL_Event* Event);
 
 GLuint VertexArrayObject;
+GLuint Texture1;
+GLuint Texture2;
 
-Shader* SimpleShader;
 Shader* VertexColorShader;
 
 void Backend::Start()
@@ -130,12 +137,13 @@ void StartProcedure()
 
 	}
 
+	glEnable(GL_DEPTH_TEST);
+
 }
 
 void ShutdownProcedure()
 {
 
-	delete SimpleShader;
 	delete VertexColorShader;
 
 	Debug::Disable();
@@ -167,15 +175,36 @@ void GameLoop(float DeltaTime)
 	// Render
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	Timer += DeltaTime;
 	float Factor = float(std::sin(Timer * 2.0) + 1.0f) / 2.0f;
 
-	SimpleShader->SetUniform(COLOR_UNIFORM, Factor * 1.0f, Factor * 0.5f, Factor * 0.2f, 1.0f);
+	glm::mat4 model;
+	model = glm::rotate(model, glm::radians(Timer * 20.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 
-	glBindVertexArray(VertexArrayObject); // Use vertex attribute data
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glm::mat4 view;
+	// note that we're translating the scene in the reverse direction of where we want to move
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+	glm::mat4 projection;
+	projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+
+	VertexColorShader->SetUniform(MODEL_UNIFORM, model);
+	VertexColorShader->SetUniform(VIEW_UNIFORM, view);
+	VertexColorShader->SetUniform(PROJECTION_UNIFORM, projection);
+
+	VertexColorShader->SetUniform(TEXTURE0_UNIFORM, 0);
+	VertexColorShader->SetUniform(TEXTURE1_UNIFORM, 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, Texture1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, Texture2);
+
+	glBindVertexArray(VertexArrayObject);
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	SDL_GL_SwapWindow(Window);
 
@@ -187,17 +216,47 @@ void LoadShaders()
 	float Vertices[] =
 	{
 	
-		-0.5, -0.5, 0.0, // Position
-		1.0, 0.0, 0.0, // Color
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-		-0.5, 0.5, 0.0,
-		0.0, 1.0, 0.0,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
-		0.5, -0.5, 0.0,
-		0.0, 0.0, 1.0,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-		0.5, 0.5, 0.0,
-		1.0, 1.0, 1.0
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	
 	};
 
@@ -205,7 +264,7 @@ void LoadShaders()
 	{
 	
 		0, 1, 2,
-		3, 1, 2
+		3, 1, 2,
 	
 	};
 
@@ -232,16 +291,44 @@ void LoadShaders()
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
 
-	SimpleShader = new Shader("singlecolor", { {COLOR_UNIFORM, "Color"} });
-	VertexColorShader = new Shader("coloredvertex", {});
+	VertexColorShader = new Shader("lighting", { { TEXTURE0_UNIFORM, "Texture" },{ MODEL_UNIFORM, "Model" },{ VIEW_UNIFORM, "View" },{ PROJECTION_UNIFORM, "Projection" } });
 
 	VertexColorShader->Use();
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Coordinates s, t, r
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	stbi_set_flip_vertically_on_load(true);
+
+	int Width, Height, NChannels;
+	unsigned char* TextureData = stbi_load("./data/texture/aRUSHI.bmp", &Width, &Height, &NChannels, 0);
+
+	glGenTextures(1, &Texture1);
+	
+	glBindTexture(GL_TEXTURE_2D, Texture1);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureData);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	TextureData = stbi_load("./data/texture/owen.png", &Width, &Height, &NChannels, STBI_rgb_alpha);
+
+	glGenTextures(1, &Texture2);
+
+	glBindTexture(GL_TEXTURE_2D, Texture2);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	stbi_image_free(TextureData);
 
 }
 
@@ -273,16 +360,6 @@ void PollEvent(SDL_Event* Event)
 				case SDLK_2:
 
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-					break;
-
-				case SDLK_3:
-
-					VertexColorShader->Use();
-					break;
-
-				case SDLK_4:
-
-					SimpleShader->Use();
 					break;
 
 			}

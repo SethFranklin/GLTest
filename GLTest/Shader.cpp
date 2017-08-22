@@ -4,6 +4,9 @@
 
 #include <glew.h>
 
+#include <glm.hpp>
+#include <gtc/type_ptr.hpp>
+
 #include "Shader.h"
 #include "Read.h"
 #include "Debug.h"
@@ -20,6 +23,7 @@ struct Shader::Impl_
 	void SetUniform(Uniform UniformToSet, float Data);
 	void SetUniform(Uniform UniformToSet, float D1, float D2, float D3, float D4);
 	void SetUniform(Uniform UniformToSet, bool Data);
+	void SetUniform(Uniform UniformToSet, glm::mat4 Data);
 
 	std::map<Uniform, int> UniformMap;
 	GLuint ShaderProgram;
@@ -69,6 +73,13 @@ void Shader::SetUniform(Uniform UniformToSet, float D1, float D2, float D3, floa
 }
 
 void Shader::SetUniform(Uniform UniformToSet, bool Data)
+{
+
+	Impl->SetUniform(UniformToSet, Data);
+
+}
+
+void Shader::SetUniform(Uniform UniformToSet, glm::mat4 Data)
 {
 
 	Impl->SetUniform(UniformToSet, Data);
@@ -141,6 +152,8 @@ Shader::Impl_::Impl_(std::string Name, std::map<Uniform, std::string> StringMap)
 	glDeleteShader(VertexShader);
 	glDeleteShader(FragmentShader);
 
+	glUseProgram(ShaderProgram);
+
 	for (std::map<Uniform, std::string>::iterator i = StringMap.begin(); i != StringMap.end(); i++)
 	{
 
@@ -189,5 +202,13 @@ void Shader::Impl_::SetUniform(Uniform UniformToSet, bool Data)
 {
 
 	glUniform1i(UniformMap[UniformToSet], int(Data));
+
+}
+
+void Shader::Impl_::SetUniform(Uniform UniformToSet, glm::mat4 Data)
+{
+
+	glUniformMatrix4fv(UniformMap[UniformToSet], 1, GL_FALSE, glm::value_ptr(Data));
+	
 
 }
