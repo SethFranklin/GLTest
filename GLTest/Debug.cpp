@@ -50,6 +50,18 @@ void Debug::Log(std::string Output)
 
 }
 
+void Debug::Log(float Output)
+{
+
+	if (State == ON)
+	{
+
+		Stream << Output << std::endl;
+
+	}
+
+}
+
 void Debug::Log(char Output[])
 {
 
@@ -62,13 +74,13 @@ void Debug::Log(char Output[])
 
 }
 
-void Debug::Int(int a)
+void Debug::Log(int Output)
 {
 
 	if (State == ON)
 	{
 
-		Stream << a << std::endl;
+		Stream << Output << std::endl;
 
 	}
 

@@ -11,7 +11,7 @@ namespace Debug
 
 	void Log(std::string Output);
 	void Log(char Output[]);
-
-	void Int(int a);
+	void Log(float Output);
+	void Log(int Output);
 
 }

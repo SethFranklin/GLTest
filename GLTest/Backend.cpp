@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cmath>
 #include <string>
+#include <vector>
 
 #include <SDL.h>
 #include <glew.h>
@@ -156,6 +157,8 @@ void ShutdownProcedure()
 
 float Timer;
 
+int NIndicies;
+
 void GameLoop(float DeltaTime)
 {
 
@@ -181,7 +184,7 @@ void GameLoop(float DeltaTime)
 	float Factor = float(std::sin(Timer * 2.0) + 1.0f) / 2.0f;
 
 	glm::mat4 model;
-	model = glm::rotate(model, glm::radians(Timer * 20.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(500.0f * std::sin(Timer)), glm::vec3(0.0f, -1.0f, 0.0f));
 
 	glm::mat4 view;
 	// note that we're translating the scene in the reverse direction of where we want to move
@@ -203,8 +206,26 @@ void GameLoop(float DeltaTime)
 	glBindTexture(GL_TEXTURE_2D, Texture2);
 
 	glBindVertexArray(VertexArrayObject);
-	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawElements(GL_TRIANGLES, NIndicies, GL_UNSIGNED_INT, 0);
+	//glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(250.0f * std::sin(Timer + 25.0f)), glm::vec3(1.0f, -1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(0.5f, 1.0f, 1.0f));
+
+	VertexColorShader->SetUniform(MODEL_UNIFORM, model);
+
+	glDrawElements(GL_TRIANGLES, NIndicies, GL_UNSIGNED_INT, 0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(-1.7f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(600.0f * std::sin(Timer / 2.0f)), glm::vec3(1.0f, -1.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(0.3f, 0.3f, 0.3f));
+
+	VertexColorShader->SetUniform(MODEL_UNIFORM, model);
+
+	glDrawElements(GL_TRIANGLES, NIndicies, GL_UNSIGNED_INT, 0);
 
 	SDL_GL_SwapWindow(Window);
 
@@ -213,60 +234,93 @@ void GameLoop(float DeltaTime)
 void LoadShaders()
 {
 
-	float Vertices[] =
+	int Stack = 256;
+	int Slice = 256;
+	float VOffset = 0.1f;
+	float PI = 3.14159265358979323846f;
+
+	std::vector<float> Verticies = {0.0, -1.0, 0.0, 0.5, 0.0};
+	std::vector<unsigned int> Indicies;
+
+	for (int StackN = 0; StackN < Stack; StackN++)
 	{
-	
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		for (int SliceN = 0; SliceN < Slice; SliceN++)
+		{
 
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+			//float Y = ((float(StackN + 1) / float(Stack + 2)) * 2.0f) - 1.0f;
+			float Y = -std::cos(PI * StackN / Stack);
 
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+			float SliceRadius = std::sqrt(1.0f - std::pow(Y, 2.0f));
 
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+			float X = SliceRadius * std::cos((float(SliceN) / float(Slice)) * 2 * PI);
+			float Z = SliceRadius * std::sin((float(SliceN) / float(Slice)) * 2 * PI);
 
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-	
-	};
+			float U = (float(SliceN) / float(Slice));
 
-	unsigned int Indices[] =
-	{
-	
-		0, 1, 2,
-		3, 1, 2,
-	
-	};
+			float V = ((float(StackN) / float(Stack - 1)) * (1.0f - (2.0f * VOffset))) + VOffset; // Scale with VOffset
+
+			Verticies.push_back(X);
+			Verticies.push_back(Y);
+			Verticies.push_back(Z);
+			Verticies.push_back(U);
+			Verticies.push_back(V);
+
+			// Indicies
+
+			if (StackN == 0) // Bottom tris
+			{
+
+				Indicies.push_back(0);
+				Indicies.push_back(1 + SliceN);
+				Indicies.push_back(2 + SliceN);
+
+				// Bottom quads
+
+				Indicies.push_back(1 + SliceN);
+				Indicies.push_back(2 + SliceN);
+				Indicies.push_back(1 + SliceN + Slice);
+
+				Indicies.push_back(2 + SliceN + Slice);
+				Indicies.push_back(2 + SliceN);
+				Indicies.push_back(1 + SliceN + Slice);
+
+			}
+			else if (StackN == Stack - 1) // Top Tris
+			{
+
+				Indicies.push_back(1 + (StackN * Slice) + SliceN);
+				Indicies.push_back(2 + (StackN * Slice) + SliceN);
+				Indicies.push_back(1 + (Stack * Slice));
+
+			}
+			else // Middle Quads
+			{
+
+				Indicies.push_back(1 + (StackN * Slice) + SliceN);
+				Indicies.push_back(2 + (StackN * Slice) + SliceN);
+				Indicies.push_back(1 + (StackN * Slice) + SliceN + Slice);
+
+				Indicies.push_back(2 + (StackN * Slice) + SliceN + Slice);
+				Indicies.push_back(2 + (StackN * Slice) + SliceN);
+				Indicies.push_back(1 + (StackN * Slice) + SliceN + Slice);
+
+			}
+
+		}
+
+	}
+
+	Verticies.push_back(0.0);
+	Verticies.push_back(1.0);
+	Verticies.push_back(0.0);
+	Verticies.push_back(0.5);
+	Verticies.push_back(1.0);
+
+	NIndicies = Indicies.size();
+
+	float* VArray = Verticies.data();
+	unsigned int* IArray = Indicies.data();
 
 	glGenVertexArrays(1, &VertexArrayObject);
 
@@ -277,7 +331,7 @@ void LoadShaders()
 
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject); // Binds the buffer object to the array buffer target
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW); // Pushes vertex data to GPU
+	glBufferData(GL_ARRAY_BUFFER, Verticies.size() * sizeof(float), VArray, GL_STATIC_DRAW); // Pushes vertex data to GPU
 
 	// GL_STATIC_DRAW is meant for vertex data that won't change often, GL_DYNAMIC_DRAW or GL_STREAM_DRAW places it in GPU memory meant for faster writes
 
@@ -289,7 +343,7 @@ void LoadShaders()
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ElementBufferObject);
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, Indicies.size() * sizeof(float), IArray, GL_STATIC_DRAW);
 
 	VertexColorShader = new Shader("lighting", { { TEXTURE0_UNIFORM, "Texture" },{ MODEL_UNIFORM, "Model" },{ VIEW_UNIFORM, "View" },{ PROJECTION_UNIFORM, "Projection" } });
 
